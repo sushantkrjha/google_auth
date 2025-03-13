@@ -47,3 +47,33 @@ def download_drive_file(access_token, file_id):
     response = requests.get(DOWNLOAD_URL.format(file_id), headers=headers)
     return response.content
 
+
+#def download_drive_file(access_token, file_id):
+    """
+    Download a file from Google Drive.
+
+    :param access_token: OAuth 2.0 Access Token
+    :param file_id: ID of the file to download
+    :return: (file_content, mime_type) if successful, otherwise (None, None)
+    """
+    headers = {"Authorization": f"Bearer {access_token}"}
+    file_metadata_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?fields=name,mimeType"
+
+    try:
+        # Get file metadata to determine MIME type
+        metadata_response = requests.get(file_metadata_url, headers=headers)
+        if metadata_response.status_code != 200:
+            return None, None
+
+        mime_type = metadata_response.json().get("mimeType", "application/octet-stream")
+
+        # Download the file
+        response = requests.get(DOWNLOAD_URL.format(file_id), headers=headers, stream=True)
+
+        if response.status_code == 200:
+            return response.content, mime_type
+        else:
+            return None, None
+    except Exception as e:
+        print(f"Error downloading file: {str(e)}")
+        return None, None
